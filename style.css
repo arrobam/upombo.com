@@ -1,0 +1,49 @@
+body{
+    background-color: rgb(0, 0, 0);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: x-large;
+}
+h1, h3, h5, p{
+    color: aliceblue;
+}
+table{
+    background-color: aliceblue;
+    color: black;
+}
+.rbst{
+    color: blue;
+}
+.localscript{
+    color: blue;
+}
+.starterCharacterScript{
+    color: green;
+}
+.starterplayerscript{
+    color: rgb(51, 162, 15);
+}
+.baixar{
+    background-color: green;
+    border: 0;
+    width: 25%;
+    height: 5vh;
+    border-radius: 1vh;
+    font-size: x-large;
+    color: aliceblue;
+    transition: transform 0.5s ease-in-out;
+}
+.baixar:hover{
+    transform: translateY(-1px);
+    cursor: pointer;
+    background-color: rgb(1, 108, 1);
+}
+.baixar:active{
+    transform: scale(0.5);
+    cursor: progress;
+}
+.Tit{
+    display: flex;
+}
+.beta{
+    color: green;
+}

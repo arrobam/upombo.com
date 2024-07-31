@@ -1,0 +1,134 @@
+-- LocalScript colocado em StarterPlayerScripts ou StarterGui
+
+-- Serviço de DataStore para salvar o estado
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+
+-- Configure o DataStore
+local clickDataStore = DataStoreService:GetDataStore("ClickDataStore")
+
+-- Configurações do som
+local loopSoundId = "rbxassetid://18220413259" -- ID do som que tocará em loop
+local clickSoundId = "rbxassetid://2621009305" -- ID do som que tocará a cada clique
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MovingGui"
+screenGui.Parent = playerGui
+
+-- Função para criar e tocar o som de clique
+local function playClickSound()
+    local clickSound = Instance.new("Sound")
+    clickSound.SoundId = clickSoundId
+    clickSound.Volume = 1 -- Aumenta o volume (não pode ser maior que 1 na maioria dos casos)
+    clickSound.Parent = screenGui -- Adiciona o som ao ScreenGui para que seja audível
+    clickSound:Play()
+    
+    -- Remove o som após ele tocar para evitar o acúmulo de objetos Sound
+    clickSound.Ended:Connect(function()
+        clickSound:Destroy()
+    end)
+end
+
+-- Função para criar e tocar o som de loop
+local function startLoopSound()
+    local loopSound = Instance.new("Sound")
+    loopSound.SoundId = loopSoundId
+    loopSound.Looped = true -- Configura o som para tocar em loop
+    loopSound.Volume = 1.5 -- Aumenta o volume
+    loopSound.Name = "LoopSound"
+    loopSound.Parent = screenGui -- Adiciona o som ao ScreenGui
+    loopSound:Play()
+end
+
+-- Função para mover o Frame continuamente
+local function moveFrame(frame)
+    while true do
+        local startPos = frame.Position
+        local endPos = UDim2.new(math.random(), 0, math.random(), 0)
+        for i = 1, 100 do
+            frame.Position = UDim2.new(
+                startPos.X.Scale + (endPos.X.Scale - startPos.X.Scale) * i / 100,
+                startPos.X.Offset + (endPos.X.Offset - startPos.X.Offset) * i / 100,
+                startPos.Y.Scale + (endPos.Y.Scale - startPos.Y.Scale) * i / 100,
+                startPos.Y.Offset + (endPos.Y.Offset - startPos.Y.Offset) * i / 100
+            )
+            wait(0.05) -- Ajuste o tempo de espera para o movimento
+        end
+        wait(1) -- Tempo adicional de espera antes de escolher uma nova posição
+    end
+end
+
+-- Função para criar o Frame inicial
+local function createInitialFrame()
+    -- Cria um Frame
+    local frame = Instance.new("Frame")
+    frame.Name = "MovingFrame"
+    frame.Size = UDim2.new(0, 200, 0, 100) -- Tamanho do Frame ajustado para acomodar o texto
+    frame.Position = UDim2.new(math.random(), 0, math.random(), 0) -- Posição inicial aleatória
+    frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Cor de fundo vermelha
+    frame.Parent = screenGui
+
+    -- Cria um TextButton sobre o Frame para detectar cliques
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 1, 0) -- Tamanho igual ao do Frame
+    button.BackgroundTransparency = 1 -- Torna o botão invisível
+    button.Text = "" -- Sem texto
+    button.Name = "TextButton"
+    button.Parent = frame
+
+    -- Cria um TextLabel dentro do Frame para exibir a mensagem
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0) -- Tamanho igual ao do Frame
+    textLabel.BackgroundTransparency = 1 -- Torna o fundo do texto invisível
+    textLabel.Text = "Não clique em mim"
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Cor do texto branca
+    textLabel.TextScaled = true -- Ajusta o texto para caber no tamanho do Label
+    textLabel.Parent = frame
+
+    -- Conecta a função de tocar o som de clique ao evento de clique do botão
+    button.MouseButton1Click:Connect(function()
+        playClickSound()
+        -- Atualiza o número de cliques no DataStore
+        local success, currentCount = pcall(function()
+            return clickDataStore:GetAsync(player.UserId)
+        end)
+        
+        if success then
+            currentCount = currentCount or 0
+            clickDataStore:SetAsync(player.UserId, currentCount + 1)
+            createMultipleFrames()
+        else
+            warn("Failed to retrieve click count from DataStore.")
+        end
+    end)
+
+    return frame
+end
+
+-- Função para criar vários botões com base na contagem de multiplicação
+local function createMultipleFrames()
+    local success, count = pcall(function()
+        return clickDataStore:GetAsync(player.UserId)
+    end)
+    
+    if success then
+        count = count or 1
+        for i = 1, count do
+            local newFrame = createInitialFrame()
+            newFrame.Position = UDim2.new(math.random(), 0, math.random(), 0) -- Posição inicial aleatória
+            moveFrame(newFrame)
+        end
+    else
+        warn("Failed to retrieve click count from DataStore.")
+    end
+end
+
+-- Cria o Frame inicial e inicia a movimentação contínua
+createMultipleFrames()
+
+-- Inicia o som de loop se não estiver tocando
+if not screenGui:FindFirstChild("LoopSound") then
+    startLoopSound()
+end
